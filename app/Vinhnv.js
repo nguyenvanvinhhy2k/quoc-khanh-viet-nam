@@ -1,14 +1,31 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 export default function Vinhnv() {
   const bgCanvasRef = useRef(null);
   const fgCanvasRef = useRef(null);
   const bgMusicRef = useRef(null);
 
-  const width = window.innerWidth;
-  const height = window.innerHeight;
+  // state để lưu kích thước màn hình
+  const [size, setSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
+    // chỉ chạy ở client
+    const handleResize = () => {
+      setSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    handleResize(); // set lần đầu
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (!size.width || !size.height) return; // chưa có size thì bỏ qua
+
+    const { width, height } = size;
     const bgCanvas = bgCanvasRef.current;
     const fgCanvas = fgCanvasRef.current;
     const bgCtx = bgCanvas.getContext("2d");
@@ -183,21 +200,17 @@ export default function Vinhnv() {
         [(3 * width) / 4, height / 1.5],
       ];
       const [cx, cy] = positions[Math.floor(Math.random() * positions.length)];
-      const colors = [
-        "red", "yellow", "lime", "cyan", "magenta", "orange", "#00ffff", "#ff00ff"
-      ];
+      const colors = ["red", "yellow", "lime", "cyan", "magenta", "orange", "#00ffff", "#ff00ff"];
       for (let i = 0; i < count; i++) {
-        fireworks.push(
-          new FireworkParticle(cx, cy, colors[Math.floor(Math.random() * colors.length)])
-        );
+        fireworks.push(new FireworkParticle(cx, cy, colors[Math.floor(Math.random() * colors.length)]));
       }
 
-      // phát tiếng nổ
-      const boom = new Audio("");
+      const boom = new Audio("/explosion.mp3"); // thêm file riêng
       boom.volume = 0.6;
       boom.play();
     }
 
+    // --- Vẽ cờ ---
     function drawFlag(ctx, time) {
       const flagWidth = 160;
       const flagHeight = 100;
@@ -231,7 +244,9 @@ export default function Vinhnv() {
     }
 
     // --- Background music (play sau 3s + fade in) ---
-    const bgMusic = new Audio("https://chiennvtodolist.runasp.net/api/FileAudio/get/de33762e-2615-4d59-b8f1-1626d0a89a73.mp3");
+    const bgMusic = new Audio(
+      "https://chiennvtodolist.runasp.net/api/FileAudio/get/de33762e-2615-4d59-b8f1-1626d0a89a73.mp3"
+    );
     bgMusic.loop = true;
     bgMusic.volume = 0;
 
@@ -301,7 +316,7 @@ export default function Vinhnv() {
       clearTimeout(timer);
       bgMusic.pause();
     };
-  }, []);
+  }, [size]);
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100vh" }}>
